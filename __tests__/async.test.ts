@@ -1,5 +1,5 @@
 import { complianceTestsAsync } from "@keeveestore/test-suite";
-import { StoreAsync } from "../src/async";
+import { StoreAsync } from "../src";
 
 complianceTestsAsync(
 	() =>
