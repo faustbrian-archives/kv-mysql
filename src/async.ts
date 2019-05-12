@@ -31,7 +31,6 @@ export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
 		});
 
 		const connection = await mysql.createConnection(opts.connection);
-		// .then(connection => (sqlQuery: string) => connection.execute(sqlQuery).then(data => data[0]))
 
 		await connection.execute(
 			table
