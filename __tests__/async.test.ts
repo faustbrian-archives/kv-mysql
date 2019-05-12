@@ -2,13 +2,14 @@ import { complianceTestsAsync } from "@keeveestore/test-suite";
 import { StoreAsync } from "../src/async";
 
 complianceTestsAsync(
-	new StoreAsync<string, string>({
-		connection: {
-			database: process.env.MYSQL_DATABASE || "keeveestore",
-			user: process.env.MYSQL_USER || "keeveestore",
-			password: process.env.MYSQL_PASSWORD || "keeveestore",
-		},
-	}),
+	() =>
+		StoreAsync.new<string, string>({
+			connection: {
+				database: process.env.MYSQL_DATABASE || "keeveestore",
+				password: process.env.MYSQL_PASSWORD || "keeveestore",
+				user: process.env.MYSQL_USER || "keeveestore",
+			},
+		}),
 	{
 		key1: "value1",
 		key2: "value2",

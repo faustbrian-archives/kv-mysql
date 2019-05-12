@@ -4,10 +4,7 @@ import mysql from "mysql2/promise";
 import sql from "sql";
 
 export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
-	private readonly table;
-	private readonly executeQuery;
-
-	public constructor(opts?: Record<string, any>) {
+	public static async new<K, T>(opts?: Record<string, any>): Promise<StoreAsync<K, T>> {
 		opts = {
 			keySize: 255,
 			table: "keeveestore",
@@ -16,7 +13,7 @@ export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
 
 		sql.setDialect("mysql");
 
-		this.table = sql.define({
+		const table = sql.define({
 			columns: [
 				{
 					dataType: `VARCHAR(${Number(opts.keySize)})`,
@@ -33,20 +30,25 @@ export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
 			name: opts.table,
 		});
 
-		const connected = Promise.resolve()
-			// @ts-ignore
-			.then(() => mysql.createConnection(opts.connection))
-			.then(connection => (sqlQuery: string) => connection.execute(sqlQuery).then(data => data[0]))
-			.then(query =>
-				query(
-					this.table
-						.create()
-						.ifNotExists()
-						.toString(),
-				).then(() => query),
-			);
+		const connection = await mysql.createConnection(opts.connection);
+		// .then(connection => (sqlQuery: string) => connection.execute(sqlQuery).then(data => data[0]))
 
-		this.executeQuery = (sqlQuery: string) => connected.then(query => query(sqlQuery));
+		await connection.execute(
+			table
+				.create()
+				.ifNotExists()
+				.toString(),
+		);
+
+		return new StoreAsync<K, T>({ connection, table });
+	}
+
+	private readonly table;
+	private readonly executeQuery;
+
+	private constructor({ connection, table }) {
+		this.table = table;
+		this.executeQuery = async (sqlQuery: string) => (await connection.execute(sqlQuery))[0];
 	}
 
 	public async all(): Promise<Array<[K, T]>> {
