@@ -4,7 +4,9 @@ import mysql from "mysql2/promise";
 import sql from "sql";
 
 export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
-	public static async new<K, T>(opts?: Record<string, any>): Promise<StoreAsync<K, T>> {
+	public static async new<K, T>(
+		opts?: Record<string, any>
+	): Promise<StoreAsync<K, T>> {
 		opts = {
 			keySize: 255,
 			table: "kv",
@@ -32,12 +34,7 @@ export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
 
 		const connection = await mysql.createConnection(opts.connection);
 
-		await connection.execute(
-			table
-				.create()
-				.ifNotExists()
-				.toString(),
-		);
+		await connection.execute(table.create().ifNotExists().toString());
 
 		return new StoreAsync<K, T>({ connection, table });
 	}
@@ -47,29 +44,27 @@ export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
 
 	private constructor({ connection, table }) {
 		this.table = table;
-		this.executeQuery = async (sqlQuery: string) => (await connection.execute(sqlQuery))[0];
+		this.executeQuery = async (sqlQuery: string) =>
+			(await connection.execute(sqlQuery))[0];
 	}
 
 	public async all(): Promise<Array<[K, T]>> {
 		const rows = await this.executeQuery(this.table.select().toString());
 
-		return rows.map(row => [row.key, row.value]);
+		return rows.map((row) => [row.key, row.value]);
 	}
 
 	public async keys(): Promise<K[]> {
-		return (await this.all()).map(row => row[0]);
+		return (await this.all()).map((row) => row[0]);
 	}
 
 	public async values(): Promise<T[]> {
-		return (await this.all()).map(row => row[1]);
+		return (await this.all()).map((row) => row[1]);
 	}
 
 	public async get(key: K): Promise<T | undefined> {
 		const rows = await this.executeQuery(
-			this.table
-				.select(this.table.value)
-				.where({ key })
-				.toString(),
+			this.table.select(this.table.value).where({ key }).toString()
 		);
 
 		const row = rows[0];
@@ -108,7 +103,9 @@ export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
 	}
 
 	public async putMany(values: Array<[K, T]>): Promise<boolean[]> {
-		return Promise.all(values.map(async (value: [K, T]) => this.put(value[0], value[1])));
+		return Promise.all(
+			values.map(async (value: [K, T]) => this.put(value[0], value[1]))
+		);
 	}
 
 	public async has(key: K): Promise<boolean> {
@@ -133,22 +130,14 @@ export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
 		}
 
 		const rows = await this.executeQuery(
-			this.table
-				.select()
-				.where({ key })
-				.toString(),
+			this.table.select().where({ key }).toString()
 		);
 
 		if (rows[0] === undefined) {
 			return false;
 		}
 
-		await this.executeQuery(
-			this.table
-				.delete()
-				.where({ key })
-				.toString(),
-		);
+		await this.executeQuery(this.table.delete().where({ key }).toString());
 
 		return this.missing(key);
 	}
@@ -164,7 +153,9 @@ export class StoreAsync<K, T> implements IKeyValueStoreAsync<K, T> {
 	}
 
 	public async count(): Promise<number> {
-		const rows = await this.executeQuery(this.table.select(this.table.count("count")).toString());
+		const rows = await this.executeQuery(
+			this.table.select(this.table.count("count")).toString()
+		);
 
 		return +rows[0].count;
 	}
